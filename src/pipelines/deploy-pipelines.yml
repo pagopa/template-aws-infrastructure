@@ -82,7 +82,7 @@ stages:
                 - template: templates/terraform-aws-apply/template.yaml@terraform
                   parameters:
                     CONNECTION: "AWS Dev"
-                    ENVIRONMENT: uat
+                    ENVIRONMENT: dev
                     WORKINGDIR: "src/main"
   # UAT
   - stage: plan_UAT
