@@ -6,11 +6,7 @@ output "dynamodb_lock_table" {
   value = aws_dynamodb_table.dynamodb-terraform-state-lock.name
 }
 
-output "iac_access_key" {
-  value = aws_iam_access_key.iac.id
-}
-
-output "iac_access_key_secret" {
-  value     = aws_iam_access_key.iac.secret
-  sensitive = true
+output "iac_role_arn" {
+  value       = aws_iam_role.githubiac.arn
+  description = "Role to use in github actions to build the infrastructure."
 }

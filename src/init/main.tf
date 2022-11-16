@@ -27,7 +27,7 @@ resource "aws_s3_bucket" "terraform_states" {
   bucket = format("terraform-backend-%04s", random_integer.bucket_suffix.result)
 
   lifecycle {
-    # prevent_destroy = true
+    prevent_destroy = true
   }
 
   tags = merge(var.tags, {
@@ -59,8 +59,8 @@ resource "aws_s3_bucket_versioning" "terraform_states" {
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock" {
   name           = "terraform-lock"
   hash_key       = "LockID"
-  read_capacity  = 8
-  write_capacity = 8
+  read_capacity  = 4
+  write_capacity = 4
 
   attribute {
     name = "LockID"
@@ -73,36 +73,54 @@ resource "aws_dynamodb_table" "dynamodb-terraform-state-lock" {
 
 }
 
-## IAM user who can manage the infrastructure definition
 data "aws_iam_policy" "admin_access" {
   name = "AdministratorAccess"
 }
 
-resource "aws_iam_group" "admins" {
-  name = "Admins"
-}
+data "aws_caller_identity" "current" {}
 
-resource "aws_iam_group_policy_attachment" "admins" {
-  group      = aws_iam_group.admins.name
-  policy_arn = data.aws_iam_policy.admin_access.arn
-}
+# github openid identity provider.
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
 
-# Usar able to manga the infrastructure.
-resource "aws_iam_user" "iac" {
-  name = "Iac"
-
-  tags = var.tags
-}
-
-resource "aws_iam_access_key" "iac" {
-  user = aws_iam_user.iac.name
-}
-
-
-resource "aws_iam_user_group_membership" "iac" {
-  user = aws_iam_user.iac.name
-
-  groups = [
-    aws_iam_group.admins.name,
+  client_id_list = [
+    "sts.amazonaws.com",
   ]
+
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1"
+  ]
+}
+
+resource "aws_iam_role" "githubiac" {
+  name        = "GitHubActionIACRole"
+  description = "Role to assume to create the infrastructure."
+
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          "Federated" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" : "repo:${var.github_repository}:*"
+          },
+          "ForAllValues:StringEquals" = {
+            "token.actions.githubusercontent.com:iss" : "https://token.actions.githubusercontent.com",
+            "token.actions.githubusercontent.com:aud" : "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "githubiac" {
+  role       = aws_iam_role.githubiac.name
+  policy_arn = data.aws_iam_policy.admin_access.arn
 }
