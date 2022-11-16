@@ -1,0 +1,67 @@
+name: "Terraform-Plan"
+
+on:
+  push:
+    branches:
+      - "main"
+      - "master"
+    paths:
+      - 'src/main/**'
+      - '.github/workflows/*.yml'
+  pull_request:
+    paths:
+      - 'src/main/**'
+      - '.github/workflows/*.yml'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: src/main
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
+jobs:
+  terraform:
+    strategy:
+      matrix:
+        environment: ['dev']
+    name: "terraform-plan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        env:
+          AWS_REGION: eu-south-1
+          IAM_ROLE: <iam role output after apply init>
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ env.IAM_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Read terraform version 
+        id: read-version
+        run: |
+          echo "TERRAFORM_VERSION=`cat ../.terraform-version`" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        run: |
+          ./terraform.sh init ${{ matrix.environment }}
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          ./terraform.sh plan ${{ matrix.environment }}
