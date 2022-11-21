@@ -21,40 +21,51 @@ on:
       environment:
         description: 'Which environment to update.'
         type: choice
-        default: 'dev'
+        default: uat
         required: true 
         options:
-        - dev
         - uat
         - prod
-
-env:
- ENVIRONMENT:  github.event.inputs.environment || 'dev'
 
 defaults:
   run:
     shell: bash
     working-directory: src/main
 
-permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
-
 jobs:
-  terraform:
-    name: "terraform-apply"
+  get-env:
+    name: "get-environment"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
+      - name: Get Environment
+        id: get-env
+        run: | 
+          USER_INPUT=${{ github.event.inputs.environment }}
+          echo "ret=${USER_INPUT:-"uat"}" >> $GITHUB_OUTPUT
+    outputs:
+     ret: ${{ steps.get-env.outputs.ret }}
+  terraform:
+    needs: [get-env]
+    name: "terraform-apply"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+    environment:
+      name: ${{ needs.get-env.outputs.ret }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+         
       - name: Configure AWS Credentials
         env:
           AWS_REGION: eu-south-1
-          IAM_ROLE: <iam role output after apply init>
+          
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ env.IAM_ROLE }}
+          role-to-assume: ${{ secrets.IAM_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Read terraform version 
@@ -70,9 +81,9 @@ jobs:
       - name: Terraform Init
         id: init
         run: |
-          ./terraform.sh init ${{ env.ENVIRONMENT }}
+          ./terraform.sh init ${{ needs.get-env.outputs.ret }}
 
       - name: Terraform Apply
         id: apply
         run: |
-          ./terraform.sh apply ${{ env.ENVIRONMENT }} -auto-approve
+          ./terraform.sh apply ${{ needs.get-env.outputs.ret }} -auto-approve

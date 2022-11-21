@@ -1,13 +1,6 @@
 name: "Terraform-Plan"
 
 on:
-  push:
-    branches:
-      - "main"
-      - "master"
-    paths:
-      - 'src/main/**'
-      - '.github/workflows/*.yml'
   pull_request:
     paths:
       - 'src/main/**'
@@ -26,9 +19,11 @@ jobs:
   terraform:
     strategy:
       matrix:
-        environment: ['dev']
+        environment: [uat, prod]
     name: "terraform-plan"
     runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+     
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -36,10 +31,9 @@ jobs:
       - name: Configure AWS Credentials
         env:
           AWS_REGION: eu-south-1
-          IAM_ROLE: <iam role output after apply init>
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ env.IAM_ROLE }}
+          role-to-assume: ${{ secrets.IAM_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Read terraform version 
