@@ -53,9 +53,14 @@ In the repository two github actions are already provided:
 
 ### Configurations
 
-* Create [github environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for uat and prod.
+* Create [github environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) every environments:dev, uat, prod, and prod_w.
+* **prod_w** is like prod but it is meant to be used only in the apply action in production. 
 
-* In each environmen create a secret named **IAM_ROLE** and set as a value the **arn** of the role created at the very beginnig when you set up the environment. 
+![](docs/github-environments.png)
+
+* In each environmen create a secret named **IAM_ROLE** and set as a value the **arn** of the role created at the very beginnig when you set up the environment (init).
+* Within the **prod_w** set two **Environment protection rules* as shown in the screenshot above:
+![](docs/protection-rules-and-secrets.png)
 
 
 ## Referencees
