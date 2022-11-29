@@ -49,7 +49,7 @@ In the repository two github actions are already provided:
 
 * **terraform-plan**: it runs every time new code is pushed in every branch excluded main and master. It runs terraform plan through all the environments in parallel.
 
-* **terraform-apply**: it run terraform apply in all the environments once a PR is merged with main.
+* **terraform-apply**: it runs terraform apply in all the environments once a PR is merged with main.
   * The apply in PROD should require an approval: it depends on the Environment protection rules.
   * It can also be triggerd manually in all the environment expect main.
 
