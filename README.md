@@ -5,9 +5,9 @@ Template useful to create a AWS infrastructures with terraform
 ## Howo to use this template
 
 1. Create your github repository starting form this template.
-2. Configure your aws cli and set the [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html). Also refer the confluence page to work with [AWS SSO](https://pagopa.atlassian.net/wiki/spaces/DEVOPS/pages/466846955/AWS+-+Users+groups+and+roles#SSO-with-GSuite).
-3. The __src/init__ directory contains the terraform code to setup the S3 backend, the Dynamodb lock table, github openid connection and the iam role to use in the github actions
-4. The __src/main__ directory cointains the terraform code to setup the core infrastructure.
+2. Configure your **aws cli** and set the [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html). Also refer the confluence page to work with [AWS SSO](https://pagopa.atlassian.net/wiki/spaces/DEVOPS/pages/466846955/AWS+-+Users+groups+and+roles#SSO-with-GSuite).
+3. The __./src/init__ directory contains the terraform code to setup the S3 backend, the Dynamodb lock table, github openid connection and the iam role to use in the github actions
+4. The __./src/main__ directory cointains the terraform code to setup the core infrastructure.
 5. The __.github/workflows__ directory contains two yaml files to run a terraform plan and apply actions. They need a github environment secret to be created: IAM_ROLE (see below.)
 
 ## Requirements
@@ -54,9 +54,12 @@ In the repository two github actions are already provided:
   * It can also be triggerd manually in all the environment expect main.
 
 
+![](./docs/gitaction-workflow.png)
+
+
 ### Configurations
 
-* Create [github environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for every environments:dev, uat, prod, and prod_w.
+* Create [github environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for every environments:**dev**, **uat**, **prod**, and **prod_w**.
 * **prod_w** is like prod but it is meant to be used only in the apply action in production. 
 
 ![](docs/github-environments.png)
