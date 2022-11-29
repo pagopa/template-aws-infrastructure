@@ -65,7 +65,7 @@ In the repository two github actions are already provided:
 ![](docs/github-environments.png)
 
 * In each environment create a secret named **IAM_ROLE** and set its value with the **arn** of the role created at the very beginnig (init).
-* Within the **prod_w** set two **Environment protection rules* as shown in the screenshot below:
+* Within **prod_w** set two **Environment protection rules** as shown in the screenshot below:
 ![](docs/protection-rules-and-secrets.png)
 
 
