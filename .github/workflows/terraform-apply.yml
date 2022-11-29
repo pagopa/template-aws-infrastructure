@@ -21,69 +21,70 @@ on:
       environment:
         description: 'Which environment to update.'
         type: choice
-        default: uat
-        required: true 
+        required: true
+        default: dev
         options:
+        - dev
         - uat
-        - prod
 
-defaults:
-  run:
-    shell: bash
-    working-directory: src/main
 
 jobs:
-  get-env:
-    name: "get-environment"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Get Environment
-        id: get-env
-        run: | 
-          USER_INPUT=${{ github.event.inputs.environment }}
-          echo "ret=${USER_INPUT:-"uat"}" >> $GITHUB_OUTPUT
-    outputs:
-     ret: ${{ steps.get-env.outputs.ret }}
-  terraform:
-    needs: [get-env]
+  manual-trigger:
+    if: "${{ github.event.inputs.environment != '' }}"
     name: "terraform-apply"
     runs-on: ubuntu-latest
+    continue-on-error: false
     permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
-    environment:
-      name: ${{ needs.get-env.outputs.ret }}
+    environment: ${{ inputs.environment }}
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-         
+        uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
         env:
           AWS_REGION: eu-south-1
-          
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
         with:
           role-to-assume: ${{ secrets.IAM_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Read terraform version 
-        id: read-version
-        run: |
-          echo "TERRAFORM_VERSION=`cat ../.terraform-version`" >> $GITHUB_ENV
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      
+      - name: Apply
+        uses: ./.github/workflows/apply
         with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          env: ${{ inputs.environment }}
+          working-directory: src/main
 
-      - name: Terraform Init
-        id: init
-        run: |
-          ./terraform.sh init ${{ needs.get-env.outputs.ret }}
+  merge-trigger:
+      if: "${{ github.event.inputs.environment == '' }} && github.ref == 'refs/heads/main'"
+      name: "terraform-apply"
+      strategy:
+        max-parallel: 1
+        matrix:
+          environment: [dev, uat, prod_w]
+      runs-on: ubuntu-latest
+      continue-on-error: false
+      environment: ${{ matrix.environment }}
+      permissions:
+        id-token: write   # This is required for requesting the JWT
+        contents: read    # This is required for actions/checkout
 
-      - name: Terraform Apply
-        id: apply
-        run: |
-          ./terraform.sh apply ${{ needs.get-env.outputs.ret }} -auto-approve
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+
+        - name: Configure AWS Credentials
+          env:
+            AWS_REGION: eu-south-1
+          uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
+          with:
+            role-to-assume: ${{ secrets.IAM_ROLE }}
+            aws-region: ${{ env.AWS_REGION }}
+        
+        - name: Apply
+          uses: ./.github/workflows/apply
+          with:
+            env: ${{ matrix.environment }}
+            working-directory: src/main
