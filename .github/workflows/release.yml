@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'CODEOWNERS'
+      - '**.md'
+      - '.**'
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning' 
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Release
+        id: release
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 18.0.0
+          extra_plugins: |
+            @semantic-release/release-notes-generator@10.0.3
+            @semantic-release/git@10.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to the Container registry
+        id: docker_login
+        if: steps.release.outputs.new_release_published == 'true'
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: docker_build_push
+        if: steps.release.outputs.new_release_published == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:v${{ steps.release.outputs.new_release_version }}
+          labels: |
+            maintainer=https://pagopa.it
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
