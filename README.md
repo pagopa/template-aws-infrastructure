@@ -70,7 +70,7 @@ In the repository two github actions are already provided:
 
 ## Releases
 
-New releases are created every time PR are merged with main. A github action is responsible to create the release and it relires on the title of the PR as described on the [official repository](https://github.com/cycjimmy/semantic-release-action)
+New releases are created every time PR are merged with main. A github action is responsible to create the release and it relires on the title of the PR as described in the [official repository](https://github.com/cycjimmy/semantic-release-action)
 
 
 ## Referencees
