@@ -68,6 +68,10 @@ In the repository two github actions are already provided:
 * Within **prod_w** set two **Environment protection rules** as shown in the screenshot below:
 ![](docs/protection-rules-and-secrets.png)
 
+## Releases
+
+New releases are created every time PR are merged with main. A github action is responsible to create the release and it relires on the title of the PR as described on the [official repository](https://github.com/cycjimmy/semantic-release-action)
+
 
 ## Referencees
 
