@@ -19,12 +19,8 @@ provider "aws" {
 # terraform state file setup
 # create an S3 bucket to store the state file in
 
-resource "random_integer" "bucket_suffix" {
-  min = 1
-  max = 9999
-}
 resource "aws_s3_bucket" "terraform_states" {
-  bucket = format("terraform-backend-%04s", random_integer.bucket_suffix.result)
+  bucket_prefix = "terraform-backend-"
 
   lifecycle {
     prevent_destroy = true
