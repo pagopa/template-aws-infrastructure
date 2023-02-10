@@ -30,8 +30,8 @@ on:
 
 jobs:
   manual-trigger:
-    if: "${{ github.event.inputs.environment != '' }}"
-    name: "terraform-apply"
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    name: "terraform-apply (manual)"
     runs-on: ubuntu-latest
     continue-on-error: false
     permissions:
@@ -50,7 +50,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.IAM_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Apply
         uses: ./.github/workflows/apply
         with:
@@ -58,8 +58,8 @@ jobs:
           working-directory: src/main
 
   merge-trigger:
-      if: "${{ github.event.inputs.environment == '' }} && github.ref == 'refs/heads/main'"
-      name: "terraform-apply"
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      name: "terraform-apply (merge)"
       strategy:
         max-parallel: 1
         matrix:
