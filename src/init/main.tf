@@ -31,9 +31,17 @@ resource "aws_s3_bucket" "terraform_states" {
   })
 }
 
-resource "aws_s3_bucket_acl" "terraform_states" {
+resource "aws_s3_bucket_ownership_controls" "terraform_states" {
   bucket = aws_s3_bucket.terraform_states.id
-  acl    = "private"
+  rule {
+    object_ownership = "ObjectWriter"
+  }
+}
+
+resource "aws_s3_bucket_acl" "terraform_states" {
+  bucket     = aws_s3_bucket.terraform_states.id
+  acl        = "private"
+  depends_on = [aws_s3_bucket_ownership_controls.terraform_states]
 }
 
 resource "aws_s3_bucket_public_access_block" "terraform_states" {
