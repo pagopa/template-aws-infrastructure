@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> <terraform latest version eg: 1.1.0>"
+  required_version = "~> 1.5.0"
 
   backend "s3" {}
 
