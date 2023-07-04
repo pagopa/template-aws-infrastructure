@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> <terraform latest version eg: 1.1.0>"
+  required_version = "~> 1.5.0"
 
   # TODO Uncomment once the backend S3 bucket is created and upload the state tate file.
   #backend "s3" {}
@@ -92,7 +92,8 @@ resource "aws_iam_openid_connect_provider" "github" {
   ]
 
   thumbprint_list = [
-    "6938fd4d98bab03faadb97b34396831e3780aea1"
+    "6938fd4d98bab03faadb97b34396831e3780aea1",
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
   ]
 }
 
